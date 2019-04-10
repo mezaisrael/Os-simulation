@@ -26,10 +26,10 @@ private:
     //current _pId available
     int pIdAvailable;
 
-    //list of process control blocks maps Pid to Process
+    //list of process control blocks. maps Pid to Process
     //maps pid to actual process. this is helpful to have a
     //central place to look for a process regardless of its state
-    std::unordered_map<int,Process> pcbs;
+    std::unordered_map<int,Process> processes;
 
     //each disk has process in queue
     std::vector<Disk> disk;
@@ -55,8 +55,13 @@ private:
     //process in the ready queue
     void rotateProcess();
 
-    //forks the current process and returns it the child
-    Process forkRunning();
+    //forks parentProcess
+    void fork(Process &parentProcess);
+
+    void waitForChildren();
+
+    void printProcessInfo();
+
 };
 
 

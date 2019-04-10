@@ -6,14 +6,12 @@
 
 using namespace std;
 
-
 int main() {
     std::cout << "Hello, World!" << std::endl;
 
     OsSimulation osSim;
 
     osSim.promptForCommand();
-
     return 0;
 
 }

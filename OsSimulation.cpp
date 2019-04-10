@@ -16,12 +16,14 @@ OsSimulation::OsSimulation() : pIdAvailable(rootPid) {
     std::cout << "\nDisk:" << std::endl;
     std::cin >> diskCount;
 
+    //create the root process
     Process rootProcess(pIdAvailable);
     pIdAvailable++;
+
     //add the root process to the list of process control blocks
-    pcbs.insert({rootProcess.getId(), rootProcess});
+    processes.insert({rootProcess.getId(), rootProcess});
     //cpu starts running process with pid of 1
-    cpu.run(&pcbs.at(rootPid));
+    cpu.run(&processes.at(rootPid));
 
     disk.resize(diskCount);
 }
@@ -43,9 +45,13 @@ void OsSimulation::promptForCommand() {
         } else if (userInput == "Q") {
             rotateProcess();
         } else if (userInput == "fork") {
-            forkRunning();
-        } else if (userInput == "exit") {
-            std::cout << "exiting program" << std::endl;
+            fork(cpu.getRunning());
+        } else if (userInput == "wait") {
+            waitForChildren();
+        }else if (userInput == "info") {
+            printProcessInfo();
+        }else if (userInput == "exit") {
+            //todo. running process terminates
         } else {
             std::cout << "invalid input" << std::endl;
         }
@@ -58,23 +64,18 @@ void OsSimulation::rotateProcess() {
     readyQueue.push(cpu.getRunning().getId());
 
     //get reference to the front of readyQueue
-    Process &frontOfQ = pcbs.at(readyQueue.front());
+    Process &frontOfQ = processes.at(readyQueue.front());
     //make cpu run it (point to it)
     cpu.run(&frontOfQ);
 
     readyQueue.pop();
 }
 
+//starts a new process which is essentially a fork of the root
 void OsSimulation::startNewProcess() {
-    Process &root = pcbs.at(1);
-    //fork return the child process created
-    Process newProcess = root.fork(pIdAvailable);
-    pcbs.insert({pIdAvailable, newProcess});
+    Process & root = processes.at(rootPid);
 
-    //insert forked to the ready queue
-    readyQueue.push(newProcess.getId());
-
-    pIdAvailable++;
+    fork(root);
 }
 
 void OsSimulation::snapShotReadyQueue() const {
@@ -91,21 +92,41 @@ void OsSimulation::snapShotReadyQueue() const {
     std::cout << std::endl;
 }
 
-Process OsSimulation::forkRunning() {
-    Process child = cpu.getRunning().fork(pIdAvailable);
+void OsSimulation::fork(Process &parentProcess) {
+    Process * processPtr = new Process(pIdAvailable, parentProcess.getId());
     pIdAvailable++;
 
-    //insert it to the process control blocks
-    pcbs.insert({child.getId(), child});
+    parentProcess.addChild(processPtr);
 
-    //the forked process is in the ready state
-    readyQueue.push(child.getId());
-    
-    std::cout << "fork process. child id is " << child.getId()
-    << "his parent is " << child.getParent() << std::endl;
+    //insert it to the process container
+    processes.insert({processPtr->getId(), *processPtr});
+
+    //insert id to the ready queue
+    readyQueue.push(processPtr->getId());
 }
 
+void OsSimulation::waitForChildren() {
 
+}
+
+void OsSimulation::printProcessInfo() {
+    int pId = pIdAvailable + 1;
+    while (pId >= pIdAvailable) {
+        std::cout << "enter pid: ";
+        std::cin >> pId;
+    }
+
+    Process & process = processes.at(pId);
+    std::cout << "pid     : " << process.getId() << std::endl;
+    std::cout << "parent  : " << process.getParent() << std::endl;
+    std::cout << "children: " << std::endl;
+    std::vector<Process *> children = process.getChildren();
+    Process * currentChild = nullptr;
+    for(int i = 0; i < children.size(); i++) {
+        currentChild = children.at(i);
+        std::cout << "--" << currentChild->getId() << " " << std::endl;
+    }
+}
 
 
 

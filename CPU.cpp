@@ -8,6 +8,6 @@ void CPU::run(Process *newRunning) {
     currentRunningProc = newRunning;
 }
 
-Process CPU::getRunning() const {
+Process &CPU::getRunning() const {
     return *currentRunningProc;
 }

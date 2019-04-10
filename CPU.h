@@ -14,7 +14,7 @@ public:
     void run(Process *newRunning);
 
     //returns reference to running process
-    Process getRunning() const;
+    Process &getRunning() const;
 private:
     Process *currentRunningProc;
 };
