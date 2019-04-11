@@ -52,6 +52,7 @@ void OsSimulation::promptForCommand() {
             printProcessInfo();
         }else if (userInput == "exit") {
             //todo. running process terminates
+            exitProcess();
         } else {
             std::cout << "invalid input" << std::endl;
         }
@@ -92,21 +93,39 @@ void OsSimulation::snapShotReadyQueue() const {
     std::cout << std::endl;
 }
 
-void OsSimulation::fork(Process &parentProcess) {
-    Process * processPtr = new Process(pIdAvailable, parentProcess.getId());
+void OsSimulation::fork(Process &forkingProcess) {
+    //pointer to child process
+    Process * childProcPtr = new Process(pIdAvailable, forkingProcess.getId());
     pIdAvailable++;
 
-    parentProcess.addChild(processPtr);
+    forkingProcess.addChild(childProcPtr);
 
     //insert it to the process container
-    processes.insert({processPtr->getId(), *processPtr});
+    processes.insert({childProcPtr->getId(), *childProcPtr});
 
     //insert id to the ready queue
-    readyQueue.push(processPtr->getId());
+    readyQueue.push(childProcPtr->getId());
 }
 
+//running process waits until its children calls exit
+//if it doesnt have children let user know
 void OsSimulation::waitForChildren() {
+    Process running = cpu.getRunning();
 
+    //check if it has children
+    if(running.getChildren().empty()) {
+        std::cout << "cant perform command on childless process." << std::endl;
+        return;
+    }
+
+    //add the running process to the waiting queue
+    waitingQueue.push(running.getId());
+
+    //get next in ready queue
+    Process & nextInLine = processes.at(readyQueue.front());
+    readyQueue.pop();
+    //run the next in line
+    cpu.run(&nextInLine);
 }
 
 void OsSimulation::printProcessInfo() {
@@ -124,8 +143,17 @@ void OsSimulation::printProcessInfo() {
     Process * currentChild = nullptr;
     for(int i = 0; i < children.size(); i++) {
         currentChild = children.at(i);
-        std::cout << "--" << currentChild->getId() << " " << std::endl;
+        std::cout << "--  " << currentChild->getId() << " " << std::endl;
     }
+}
+
+void OsSimulation::exitProcess() {
+//    if(!cpu.getRunning().getChildren().empty()) {
+//        Process *currProcessPtr = nullptr;
+//        for(int i = 0; i < currProcessPtr) {
+//
+//        }
+//    }
 }
 
 

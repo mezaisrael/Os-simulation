@@ -62,6 +62,7 @@ private:
 
     void printProcessInfo();
 
+    void exitProcess();
 };
 
 
