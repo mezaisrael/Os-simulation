@@ -23,10 +23,6 @@ public:
     //returns a reference to the Process children
     std::vector<Process*> & getChildren();
 
-    //forks new process and return the new process created
-    //@param childId is the id of the new process created by the fork
-    Process fork(int childId);
-
     void addChild(Process *childPtr);
 private:
 

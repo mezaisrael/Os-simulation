@@ -9,15 +9,6 @@ Process::Process(int pId) : _pId(pId), _parentPid(0) {}
 
 Process::Process(int pId, int parentId) : _pId(pId), _parentPid(parentId) {}
 
-Process Process::fork(int childId) {
-    //construct a child with the parent id
-    Process child(childId, _pId);
-
-    children.push_back(&child);
-    std::cout << "num of  children: " << children.size() << std::endl; 
-    return child;
-}
-
 int Process::getId() {return _pId;}
 
 int Process::getParent() {return _parentPid;}
