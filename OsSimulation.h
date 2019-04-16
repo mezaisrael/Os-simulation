@@ -8,11 +8,10 @@
 #include <iostream>
 #include <unordered_map>
 #include <vector>
-#include <queue>
+#include <deque>
 #include "Process.h"
 #include "Disk.h"
 #include "CPU.h"
-
 
 class OsSimulation {
 public:
@@ -37,10 +36,10 @@ private:
     CPU cpu;
 
     //processes in waiting
-    std::queue<int> waitingQueue;
+    std::deque<int> waitingQueue;
 
     //processes in readyQueue queue
-    std::queue<int> readyQueue;
+    std::deque<int> readyQueue;
 
     //id of terminated process
     std::vector<int> terminated;
@@ -62,7 +61,12 @@ private:
 
     void printProcessInfo();
 
-    void exitProcess();
+    //exist the current running process.
+    //if it has children exit them also
+    //if its parent is in the wait state move it to the ready queue
+    void exitProcess(Process* processPtr);
+
+    void removeFromSystem(int pId);
 };
 
 
