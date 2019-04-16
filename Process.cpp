@@ -20,3 +20,7 @@ std::vector<Process*>& Process::getChildren() {
 void Process::addChild(Process *child) {
     children.push_back(child);
 }
+
+bool Process::isParent() {
+    return !children.empty();
+}

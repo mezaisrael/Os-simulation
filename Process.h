@@ -24,6 +24,9 @@ public:
     std::vector<Process*> & getChildren();
 
     void addChild(Process *childPtr);
+
+    //returns true if
+    bool isParent();
 private:
 
     //process id
