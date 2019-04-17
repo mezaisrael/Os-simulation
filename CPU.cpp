@@ -4,10 +4,11 @@
 
 #include "CPU.h"
 
-void CPU::run(Process *newRunning) {
-    currentRunningProc = newRunning;
+void CPU::run(Process &newRunning) {
+    processingId = newRunning.getId();
+    newRunning.setState(running);
 }
 
-Process &CPU::getRunning() const {
-    return *currentRunningProc;
+int CPU::getRunning() const {
+    return processingId;
 }

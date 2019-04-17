@@ -11,12 +11,12 @@
 class CPU {
 public:
     //pass it a new Process to process
-    void run(Process *newRunning);
+    void run(Process &process);
 
-    //returns reference to running process
-    Process &getRunning() const;
+    //returns id of the running proceess
+    int getRunning() const;
 private:
-    Process *currentRunningProc;
+    int processingId;
 };
 
 

@@ -18,12 +18,11 @@ OsSimulation::OsSimulation() : pIdAvailable(rootPid) {
 
     //create the root process
     Process rootProcess(pIdAvailable);
-    pIdAvailable++;
 
     //add the root process to the list of process control blocks
     processes.insert({rootProcess.getId(), rootProcess});
     //cpu starts running process with pid of 1
-    cpu.run(&processes.at(rootPid));
+    cpu.run(rootProcess);
 
     disk.resize(diskCount);
 }
@@ -33,7 +32,7 @@ void OsSimulation::promptForCommand() {
     //flush cin buffer
     std::cin.ignore();
 
-    while (userInput != "exit") {
+    while (userInput != "end") {
         std::cout << ">> ";
 
         getline(std::cin, userInput);
@@ -45,14 +44,14 @@ void OsSimulation::promptForCommand() {
         } else if (userInput == "Q") {
             rotateProcess();
         } else if (userInput == "fork") {
-            fork(cpu.getRunning());
+            fork(runningProcess());
         } else if (userInput == "wait") {
             waitForChildren();
         }else if (userInput == "info") {
             printProcessInfo();
         }else if (userInput == "exit") {
             //todo. running process terminates
-            exitProcess();
+//            exitProcess(&cpu.getRunning());
         } else {
             std::cout << "invalid input" << std::endl;
         }
@@ -61,15 +60,16 @@ void OsSimulation::promptForCommand() {
 }
 
 void OsSimulation::rotateProcess() {
-    //move id running process to back of readyQueue
-    readyQueue.push(cpu.getRunning().getId());
+    //move id of running process to back of readyQueue
+    readyQueue.push_back(runningProcess().getId());
+    //change the state of the running process to ready
+    runningProcess().setState(ready);
 
     //get reference to the front of readyQueue
-    Process &frontOfQ = processes.at(readyQueue.front());
-    //make cpu run it (point to it)
-    cpu.run(&frontOfQ);
-
-    readyQueue.pop();
+    Process& frontOfQ = processes.at(readyQueue.front());
+    readyQueue.pop_front();
+    //make cpu run it
+    cpu.run(frontOfQ);
 }
 
 //starts a new process which is essentially a fork of the root
@@ -80,57 +80,51 @@ void OsSimulation::startNewProcess() {
 }
 
 void OsSimulation::snapShotReadyQueue() const {
-    std::cout << "cpu: pid " << cpu.getRunning().getId() << std::endl;
+    std::cout << "cpu: pid " << cpu.getRunning() << std::endl;
     std::cout << "r-q: " << std::endl;
 
-    std::queue<int> readyQCopy = readyQueue;
-
-    while (!readyQCopy.empty()) {
-        std::cout << "  pid " << readyQCopy.front() << std::endl;
-        readyQCopy.pop();
+    for (auto id : readyQueue) {
+        std::cout << id << std::endl;
     }
 
     std::cout << std::endl;
 }
 
 void OsSimulation::fork(Process &forkingProcess) {
-    //pointer to child process
-    Process * childProcPtr = new Process(pIdAvailable, forkingProcess.getId());
-    pIdAvailable++;
+    //make a child of the parent
+    Process childProc(pIdAvailable, forkingProcess.getId(), ready);
 
-    forkingProcess.addChild(childProcPtr);
+    forkingProcess.addChild(childProc.getId());
 
     //insert it to the process container
-    processes.insert({childProcPtr->getId(), *childProcPtr});
+    processes.insert({childProc.getId(), childProc});
 
     //insert id to the ready queue
-    readyQueue.push(childProcPtr->getId());
+    readyQueue.push_back(childProc.getId());
 }
 
 //running process waits until its children calls exit
 //if it doesnt have children let user know
 void OsSimulation::waitForChildren() {
-    Process running = cpu.getRunning();
-
     //check if it has children
-    if(running.getChildren().empty()) {
+    if(!runningProcess().isParent()) {
         std::cout << "cant perform command on childless process." << std::endl;
         return;
     }
 
     //add the running process to the waiting queue
-    waitingQueue.push(running.getId());
+    waitingQueue.push_back(runningProcess().getId());
 
     //get next in ready queue
     Process & nextInLine = processes.at(readyQueue.front());
-    readyQueue.pop();
+    readyQueue.pop_front();
     //run the next in line
-    cpu.run(&nextInLine);
+    cpu.run(nextInLine);
 }
 
 void OsSimulation::printProcessInfo() {
     int pId = pIdAvailable + 1;
-    while (pId >= pIdAvailable) {
+    while (pId >= pIdAvailable && pId > 0) {
         std::cout << "enter pid: ";
         std::cin >> pId;
     }
@@ -139,21 +133,51 @@ void OsSimulation::printProcessInfo() {
     std::cout << "pid     : " << process.getId() << std::endl;
     std::cout << "parent  : " << process.getParent() << std::endl;
     std::cout << "children: " << std::endl;
-    std::vector<Process *> children = process.getChildren();
-    Process * currentChild = nullptr;
-    for(int i = 0; i < children.size(); i++) {
-        currentChild = children.at(i);
-        std::cout << "--  " << currentChild->getId() << " " << std::endl;
+    std::vector<int>& children = process.getChildren();
+    for (auto childId : children) {
+        std::cout << childId << std::endl;
     }
 }
 
-void OsSimulation::exitProcess() {
-//    if(!cpu.getRunning().getChildren().empty()) {
-//        Process *currProcessPtr = nullptr;
-//        for(int i = 0; i < currProcessPtr) {
+void OsSimulation::exitProcess(Process* processPtr) {
+//    std::vector<Process*> &children = cpu.getRunning().getChildren();
 //
-//        }
+//    //if doesnt have any children just delete it
+//    //from the process
+//    if (!processPtr->isParent()) {
+//        removeFromSystem(processPtr->getId());
 //    }
+//
+//    for(auto & childPtr : children) {
+//        exitProcess(childPtr);
+//    }
+}
+
+void OsSimulation::removeFromSystem(int pId) {
+//    //get the state of the process
+//    State stateOfProcess = processes.at(pid).getState();
+//
+//    switch (stateOfProcess) {
+//        case(ready) :
+//            //remove from ready deque
+//            for(int i = 0; i < readyQueue.size(); i++) {
+//                if (readyQueue.at(i) == pId) {
+//                    readyQueue.erase(readyQueue.begin()+i);
+//                }
+//            }
+//            break;
+//        case (waiting) : //remove from waiting
+//        break;
+//        case(running) : //stop cpu from running it
+//    }
+//
+//    //remove from processes
+//    processes.erase(pId);
+
+}
+
+Process &OsSimulation::runningProcess() {
+    return processes.at(cpu.getRunning());
 }
 
 

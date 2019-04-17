@@ -7,13 +7,15 @@
 
 #include <vector>
 #include <iostream>
-
+#include "ProcState.h"
 
 class Process {
 public:
-    //constructors
-    Process(int pId);
-    Process(int pId, int parentId);
+    //constructor for the root process. It starts int he running state
+    //since it is not compting for the cpu.
+    Process(int &pId);
+
+    Process(int &pId, int parentId, ProcState state);
 
     //returns the pid of the process
     int getId();
@@ -21,19 +23,28 @@ public:
     int getParent();
 
     //returns a reference to the Process children
-    std::vector<Process*> & getChildren();
+    std::vector<int> & getChildren();
 
-    void addChild(Process *childPtr);
+    void addChild(int childPid);
 
-    //returns true if
+    //returns true if it is a parent of other processes
     bool isParent();
+
+    //set the state of the process
+    void setState(ProcState newState);
+
+    //get the state
+    ProcState getState() const;
 private:
 
     //process id
     int _pId;
 
-    //list of pointers to it children
-    std::vector<Process*> children;
+    //state in which the procces is
+    ProcState _state;
+
+    //list of pids of its children to it children
+    std::vector<int> children;
 
     //parent id if root it is equal to 0
     int _parentPid;

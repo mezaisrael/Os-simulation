@@ -44,6 +44,12 @@ private:
     //id of terminated process
     std::vector<int> terminated;
 
+    //--- private functions ------------------------
+
+    //return reference to the running process
+    Process &runningProcess();
+
+
     //new process begins
     void startNewProcess();
 

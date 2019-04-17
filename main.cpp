@@ -12,6 +12,7 @@ int main() {
     OsSimulation osSim;
 
     osSim.promptForCommand();
-    return 0;
+
+return 0;
 
 }
