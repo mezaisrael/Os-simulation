@@ -19,12 +19,12 @@ int Process::getId() {return _pId;}
 
 int Process::getParent() {return _parentPid;}
 
-std::vector<int>& Process::getChildren() {
+std::unordered_set<int>& Process::getChildren() {
     return children;
 }
 
 void Process::addChild(int childPid) {
-    children.push_back(childPid);
+    children.emplace(childPid);
 }
 
 bool Process::isParent() {
@@ -37,4 +37,8 @@ void Process::setState(ProcState newState) {
 
 ProcState Process::getState() const {
     return _state;
+}
+
+void Process::removeChild(int childId) {
+    children.erase(childId);
 }

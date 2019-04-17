@@ -5,14 +5,15 @@
 #ifndef UNTITLED_PROCESS_H
 #define UNTITLED_PROCESS_H
 
-#include <vector>
 #include <iostream>
+#include <unordered_set>
+#include <bits/unordered_set.h>
 #include "ProcState.h"
 
 class Process {
 public:
     //constructor for the root process. It starts int he running state
-    //since it is not compting for the cpu.
+    //since it is not competing for the cpu.
     Process(int &pId);
 
     Process(int &pId, int parentId, ProcState state);
@@ -35,16 +36,19 @@ public:
 
     //get the state
     ProcState getState() const;
+
+    void removeChild(int childId);
+
 private:
 
     //process id
     int _pId;
 
-    //state in which the procces is
+    //state in which the process is
     ProcState _state;
 
     //list of pids of its children to it children
-    std::vector<int> children;
+    std::unordered_set<int> children;
 
     //parent id if root it is equal to 0
     int _parentPid;
