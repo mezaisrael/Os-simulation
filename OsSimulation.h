@@ -13,6 +13,9 @@
 #include "Disk.h"
 #include "CPU.h"
 
+
+//    TODO: process 1 never uses cpu or any queue
+//    cpu starts with 2. its ok to make cpu idleR
 class OsSimulation {
 public:
     OsSimulation();
@@ -42,7 +45,7 @@ private:
     std::deque<int> readyQueue;
 
     //id of terminated process
-    std::vector<int> terminated;
+    std::vector<int> terminatedProc;
 
     //--- private functions ------------------------
 
@@ -70,9 +73,18 @@ private:
     //exist the current running process.
     //if it has children exit them also
     //if its parent is in the wait state move it to the ready queue
-    void exitProcess(Process* processPtr);
+    void exitRunning();
+
+    //helper method for exitRunning()
+    void endProcess(Process& processPtr);
 
     void removeFromSystem(int pId);
+
+    /*
+    recursive helper method called by exit running infectedProcess
+     is the process that is about to turn into zombie
+    */
+    void turnToZombie(Process &infectedProcess);
 };
 
 

@@ -13,6 +13,6 @@ int main() {
 
     osSim.promptForCommand();
 
-return 0;
+    return 0;
 
 }

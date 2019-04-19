@@ -50,8 +50,8 @@ void OsSimulation::promptForCommand() {
         }else if (userInput == "info") {
             printProcessInfo();
         }else if (userInput == "exit") {
-            //todo. running process terminates
-//            exitProcess(&cpu.getRunning());
+            //todo. test this function
+            exitRunning();
         } else {
             std::cout << "invalid input" << std::endl;
         }
@@ -133,52 +133,70 @@ void OsSimulation::printProcessInfo() {
     std::cout << "pid     : " << process.getId() << std::endl;
     std::cout << "parent  : " << process.getParent() << std::endl;
     std::cout << "children: " << std::endl;
-    std::vector<int>& children = process.getChildren();
+    std::unordered_set<int>& children = process.getChildren();
     for (auto childId : children) {
         std::cout << childId << std::endl;
     }
 }
 
-void OsSimulation::exitProcess(Process* processPtr) {
-//    std::vector<Process*> &children = cpu.getRunning().getChildren();
-//
-//    //if doesnt have any children just delete it
-//    //from the process
-//    if (!processPtr->isParent()) {
-//        removeFromSystem(processPtr->getId());
-//    }
-//
-//    for(auto & childPtr : children) {
-//        exitProcess(childPtr);
-//    }
+void OsSimulation::exitRunning() {
+    //if parent is waiting make it ready
+    int parentId = runningProcess().getParent();
+    if(parentId != 0 && processes.at(parentId).getState() == waiting) {
+        processes.at(parentId).setState(ready);
+        readyQueue.push_back(runningProcess().getId());
+        endProcess(runningProcess());
+    } else {
+        //if parent hasn't called wait, make it and its decedents zombies
+        turnToZombie(runningProcess());
+    }
+
+    //run next in ready queue
+    cpu.run(processes.at(readyQueue.front()));
+    readyQueue.pop_front();
 }
 
-void OsSimulation::removeFromSystem(int pId) {
-//    //get the state of the process
-//    State stateOfProcess = processes.at(pid).getState();
-//
-//    switch (stateOfProcess) {
-//        case(ready) :
-//            //remove from ready deque
-//            for(int i = 0; i < readyQueue.size(); i++) {
-//                if (readyQueue.at(i) == pId) {
-//                    readyQueue.erase(readyQueue.begin()+i);
-//                }
-//            }
-//            break;
-//        case (waiting) : //remove from waiting
-//        break;
-//        case(running) : //stop cpu from running it
-//    }
-//
-//    //remove from processes
-//    processes.erase(pId);
+void OsSimulation::endProcess(Process & process) {
+    //base case
+    if (!process.isParent()) {
+        //if its in ready que remove it
+        //todo: if its in disk, remove from disk once implemented
+        if (process.getState() == ready) {
+        } else if(process.getState() == waiting) {
 
+        }
+        processes.erase(process.getId());
+    }
+
+    std::unordered_set<int> childrenIds = process.getChildren();
+    for(auto childId : childrenIds) {
+        endProcess(processes.at(childId));
+    }
+}
+
+void OsSimulation::turnToZombie(Process &infectedProcess) {
+
+    switch (infectedProcess.getState()) {
+        case ready :
+            for (int i = 0; i < readyQueue.size(); ++i) {
+                if(readyQueue.at(i) == infectedProcess.getId()) {
+                    readyQueue.erase(readyQueue.begin()+i);
+                }
+            }
+            break;
+        case readyIO:
+            //TODO remove from readyIo queue
+            break;
+        case usingDisk:
+            //if it is using disk make disk run next in queue
+            break;
+
+    }
+
+    infectedProcess.setState(terminated);
 }
 
 Process &OsSimulation::runningProcess() {
     return processes.at(cpu.getRunning());
 }
-
-
 
