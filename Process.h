@@ -24,7 +24,7 @@ public:
     int getParent();
 
     //returns a reference to the Process children
-    std::vector<int> & getChildren();
+    std::unordered_set<int> & getChildren();
 
     void addChild(int childPid);
 
