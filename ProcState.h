@@ -5,6 +5,6 @@
 #ifndef UNTITLED_PROCSTATE_H
 #define UNTITLED_PROCSTATE_H
 
-enum ProcState{ready, waiting, running, terminated};
+enum ProcState{ready, readyIO, waiting, running, usingDisk, terminated};
 
 #endif //UNTITLED_PROCSTATE_H
