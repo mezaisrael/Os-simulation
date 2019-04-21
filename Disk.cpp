@@ -17,4 +17,13 @@ bool Disk::use(int pId) {
     }
 }
 
+void Disk::finishJob() {
+    usingProcess = waiting.front();
+    waiting.pop_front();
+}
+
+int Disk::getProcess() {
+    return usingProcess;
+}
+
 

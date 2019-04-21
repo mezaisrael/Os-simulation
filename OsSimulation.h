@@ -12,6 +12,7 @@
 #include "Process.h"
 #include "Disk.h"
 #include "CPU.h"
+#include "HelperFunctions.h"
 
 
 //    TODO: process 1 never uses cpu or any queue
@@ -86,6 +87,8 @@ private:
 
     //dIndex is the index of the disk filename wants to use
     void requestFile(int dIndex, std::string &fileName);
+
+    void diskFinish(int num);
 };
 
 

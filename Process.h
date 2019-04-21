@@ -43,7 +43,13 @@ public:
 
     void requestDisk(Disk &disk, std::string & fileName);
 
+    //process finished using the disk
+    void finishUsingDisk();
+
+    //get the name of the file it is using
+    // return empty string if it is not using a file
     std::string getFile();
+
 private:
 
     //process id

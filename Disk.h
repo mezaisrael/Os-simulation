@@ -15,6 +15,12 @@ public:
     //pId attempts to use the disk if it busy return false
     //and puts it in the queue. Returns true if it was successful
     bool use(int pId);
+
+    //the hard disk finished the work of the current process
+    void finishJob();
+
+    //return id of the current process using the disk
+    int getProcess();
 private:
 
     //pid of the current process using the disk

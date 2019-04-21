@@ -5,7 +5,7 @@
 #include <sstream>
 #include <zconf.h>
 #include "OsSimulation.h"
-#include "Split.h"
+#include "HelperFunctions.h"
 
 //constructor
 OsSimulation::OsSimulation() : pIdAvailable(rootPid) {
@@ -60,8 +60,14 @@ void OsSimulation::promptForCommand() {
             } catch(...) {
                 std::cout << "Input is not a number" << std::endl;
             }
-        }
-        else if (userInput == "info") {
+        } else if (commands.at(0) == "D") {
+            try {
+                int diskNum = stoi(commands.at(1));
+                diskFinish(diskNum);
+            } catch (...) {
+                std::cout << "Input is not a number" << std::endl;
+            }
+        } else if (userInput == "info") {
             printProcessInfo();
         } else if (userInput == "exit") {
             //todo. test this function
@@ -225,5 +231,15 @@ void OsSimulation::requestFile(int dIndex, std::string &fileName) {
     }
 
     runningProcess().requestDisk(disk.at(dIndex), fileName);
+}
+
+void OsSimulation::diskFinish(int diskNum) {
+    //get the id of the process using the disk
+    int pidInDisk = disk.at(diskNum).getProcess();
+
+    processes.at(pidInDisk).finishUsingDisk();
+
+    //add it to the readyQueue
+    readyQueue.push_back(pidInDisk);
 }
 

@@ -58,3 +58,11 @@ void Process::requestDisk(Disk &disk, std::string & fileName) {
 std::string Process::getFile() {
     return _fileName;
 }
+
+void Process::finishUsingDisk() {
+    currentDisk = -1;
+    _fileName = "";
+    setState(ready);
+}
+
+
