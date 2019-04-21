@@ -5,12 +5,13 @@
 #include "Process.h"
 
 //constructor for the root process it start in the running state since it is the root
-Process::Process(int& pId) : _pId(pId), _parentPid(0), _state(running) {
-    //increment the availabl pid
+Process::Process(int& pId) : _pId(pId), _parentPid(0), _state(running), currentDisk(-1) {
+    //increment the available pid
     pId++;
 }
 
-Process::Process(int& pId, int parentId, ProcState state) : _pId(pId), _parentPid(parentId), _state(state){
+Process::Process(int& pId, int parentId, ProcState state) : _pId(pId), _parentPid(parentId), _state(state), currentDisk(
+        -1){
 //  increment the pid available
     pId++;
 }
@@ -41,4 +42,19 @@ ProcState Process::getState() const {
 
 void Process::removeChild(int childId) {
     children.erase(childId);
+}
+
+void Process::requestDisk(Disk &disk, std::string & fileName) {
+    _fileName = fileName;
+
+    bool inQueue = disk.use(_pId);
+    if (inQueue) {
+        setState(readyIO);
+    } else {
+        setState(usingDisk);
+    }
+}
+
+std::string Process::getFile() {
+    return _fileName;
 }

@@ -6,11 +6,23 @@
 #define UNTITLED_DISK_H
 
 
-#include <vector>
-#include "Process.h"
+#include <deque>
 
 class Disk {
-    std::vector<Process*> waiting;
+public:
+    Disk();
+
+    //pId attempts to use the disk if it busy return false
+    //and puts it in the queue. Returns true if it was successful
+    bool use(int pId);
+private:
+
+    //pid of the current process using the disk
+    //if 0 then it is idle
+    int usingProcess;
+
+    //queue of processes waiting to use the disk
+    std::deque<int> waiting;
 };
 
 

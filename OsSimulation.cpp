@@ -2,7 +2,10 @@
 // Created by israel on 3/28/19.
 //
 
+#include <sstream>
+#include <zconf.h>
 #include "OsSimulation.h"
+#include "Split.h"
 
 //constructor
 OsSimulation::OsSimulation() : pIdAvailable(rootPid) {
@@ -15,6 +18,8 @@ OsSimulation::OsSimulation() : pIdAvailable(rootPid) {
     std::cin >> pages;
     std::cout << "\nDisk:" << std::endl;
     std::cin >> diskCount;
+    //flush cin
+    std::cin.ignore();
 
     //create the root process
     Process rootProcess(pIdAvailable);
@@ -29,13 +34,13 @@ OsSimulation::OsSimulation() : pIdAvailable(rootPid) {
 
 void OsSimulation::promptForCommand() {
     std::string userInput;
-    //flush cin buffer
-    std::cin.ignore();
 
     while (userInput != "end") {
         std::cout << ">> ";
-
+//        std::cin.ignore();
         getline(std::cin, userInput);
+        //split the string to get inputs with numbers;
+        std::vector<std::string> commands = split(userInput);
 
         if (userInput == "A") {
             startNewProcess();
@@ -47,9 +52,18 @@ void OsSimulation::promptForCommand() {
             fork(runningProcess());
         } else if (userInput == "wait") {
             waitForChildren();
-        }else if (userInput == "info") {
+        } else if (commands.at(0) == "d") {
+            try {
+                int diskNum = stoi(commands.at(1));
+                //pass the fileName
+                requestFile(diskNum, commands.at(2));
+            } catch(...) {
+                std::cout << "Input is not a number" << std::endl;
+            }
+        }
+        else if (userInput == "info") {
             printProcessInfo();
-        }else if (userInput == "exit") {
+        } else if (userInput == "exit") {
             //todo. test this function
             exitRunning();
         } else {
@@ -125,17 +139,19 @@ void OsSimulation::waitForChildren() {
 void OsSimulation::printProcessInfo() {
     int pId = pIdAvailable + 1;
     while (pId >= pIdAvailable && pId > 0) {
-        std::cout << "enter pid: ";
+        std::cout << "  enter pid: ";
         std::cin >> pId;
+        std::cin.ignore();
     }
 
     Process & process = processes.at(pId);
     std::cout << "pid     : " << process.getId() << std::endl;
     std::cout << "parent  : " << process.getParent() << std::endl;
-    std::cout << "children: " << std::endl;
+    std::cout << "file    : " << process.getFile() << std::endl;
+    std::cout << "children: ";
     std::unordered_set<int>& children = process.getChildren();
     for (auto childId : children) {
-        std::cout << childId << std::endl;
+        std::cout << childId << ", " << std::endl;
     }
 }
 
@@ -198,5 +214,16 @@ void OsSimulation::turnToZombie(Process &infectedProcess) {
 
 Process &OsSimulation::runningProcess() {
     return processes.at(cpu.getRunning());
+}
+
+void OsSimulation::requestFile(int dIndex, std::string &fileName) {
+    if (dIndex >= disk.size()) {
+        std::cout <<
+            "Operating system does not have "
+            "that many Disk" << std::endl;
+        return;
+    }
+
+    runningProcess().requestDisk(disk.at(dIndex), fileName);
 }
 

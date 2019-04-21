@@ -78,13 +78,14 @@ private:
     //helper method for exitRunning()
     void endProcess(Process& processPtr);
 
-    void removeFromSystem(int pId);
-
     /*
     recursive helper method called by exit running infectedProcess
      is the process that is about to turn into zombie
     */
     void turnToZombie(Process &infectedProcess);
+
+    //dIndex is the index of the disk filename wants to use
+    void requestFile(int dIndex, std::string &fileName);
 };
 
 

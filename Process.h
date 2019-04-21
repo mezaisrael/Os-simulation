@@ -7,8 +7,10 @@
 
 #include <iostream>
 #include <unordered_set>
+#include <deque>
 #include <bits/unordered_set.h>
 #include "ProcState.h"
+#include "Disk.h"
 
 class Process {
 public:
@@ -39,6 +41,9 @@ public:
 
     void removeChild(int childId);
 
+    void requestDisk(Disk &disk, std::string & fileName);
+
+    std::string getFile();
 private:
 
     //process id
@@ -52,6 +57,14 @@ private:
 
     //parent id if root it is equal to 0
     int _parentPid;
+
+    //the number of the disk it is in. If it is not
+    //in disk queue set it to -1
+    int currentDisk;
+
+    //the name of the file it is using. Empty string if
+    //it is not using a file
+    std::string _fileName;
 };
 
 
