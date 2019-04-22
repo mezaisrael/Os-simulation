@@ -9,15 +9,25 @@
 
 //constructor
 OsSimulation::OsSimulation() : pIdAvailable(rootPid) {
-    int memory;
-    int pages;
     int diskCount;
-    std::cout << "Memory:(bytes)";
-    std::cin >> memory;
-    std::cout << "\npages:" << std::endl;
-    std::cin >> pages;
-    std::cout << "\nDisk:" << std::endl;
-    std::cin >> diskCount;
+    while (true) {
+        int memory;
+        int pages;
+        std::cout << "Memory:(bytes)";
+        std::cin >> memory;
+        std::cout << "\npages:" << std::endl;
+        std::cin >> pages;
+        std::cout << "\nDisk:" << std::endl;
+        std::cin >> diskCount;
+
+        if(std::cin.fail()) {
+            std::cin.clear();
+            std::cin.ignore();
+        } else {
+            break;
+        }
+    }
+
     //flush cin
     std::cin.ignore();
 
@@ -91,11 +101,7 @@ void OsSimulation::rotateProcess() {
     //change the state of the running process to ready
     runningProcess().setState(ready);
 
-    //get reference to the front of readyQueue
-    Process& frontOfQ = processes.at(readyQueue.front());
-    readyQueue.pop_front();
-    //make cpu run it
-    cpu.run(frontOfQ);
+    runNextInQueue();
 }
 
 //starts a new process which is essentially a fork of the root
@@ -141,11 +147,7 @@ void OsSimulation::waitForChildren() {
     //add the running process to the waiting queue
     waitingQueue.push_back(runningProcess().getId());
 
-    //get next in ready queue
-    Process & nextInLine = processes.at(readyQueue.front());
-    readyQueue.pop_front();
-    //run the next in line
-    cpu.run(nextInLine);
+    runNextInQueue();
 }
 
 void OsSimulation::printProcessInfo() {
@@ -179,9 +181,7 @@ void OsSimulation::exitRunning() {
         turnToZombie(runningProcess());
     }
 
-    //run next in ready queue
-    cpu.run(processes.at(readyQueue.front()));
-    readyQueue.pop_front();
+    runNextInQueue();
 }
 
 void OsSimulation::endProcess(Process & process) {
