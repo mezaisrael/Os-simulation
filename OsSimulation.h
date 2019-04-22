@@ -35,7 +35,7 @@ private:
     std::unordered_map<int,Process> processes;
 
     //each disk has process in queue
-    std::vector<Disk> disk;
+    std::vector<Disk> disks;
 
     CPU cpu;
 
@@ -89,6 +89,10 @@ private:
     void requestFile(int dIndex, std::string &fileName);
 
     void diskFinish(int num);
+
+    void snapShotIO();
+
+    void runNextInQueue();
 };
 
 

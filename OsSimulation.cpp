@@ -29,7 +29,7 @@ OsSimulation::OsSimulation() : pIdAvailable(rootPid) {
     //cpu starts running process with pid of 1
     cpu.run(rootProcess);
 
-    disk.resize(diskCount);
+    disks.resize(diskCount);
 }
 
 void OsSimulation::promptForCommand() {
@@ -37,8 +37,12 @@ void OsSimulation::promptForCommand() {
 
     while (userInput != "end") {
         std::cout << ">> ";
-//        std::cin.ignore();
         getline(std::cin, userInput);
+
+        if (userInput == "") {
+            continue;
+        }
+        
         //split the string to get inputs with numbers;
         std::vector<std::string> commands = split(userInput);
 
@@ -55,7 +59,7 @@ void OsSimulation::promptForCommand() {
         } else if (commands.at(0) == "d") {
             try {
                 int diskNum = stoi(commands.at(1));
-                //pass the fileName
+                //the diskNUm and the fileName
                 requestFile(diskNum, commands.at(2));
             } catch(...) {
                 std::cout << "Input is not a number" << std::endl;
@@ -67,6 +71,8 @@ void OsSimulation::promptForCommand() {
             } catch (...) {
                 std::cout << "Input is not a number" << std::endl;
             }
+        } else if(userInput == "S i") {
+            snapShotIO();
         } else if (userInput == "info") {
             printProcessInfo();
         } else if (userInput == "exit") {
@@ -223,23 +229,61 @@ Process &OsSimulation::runningProcess() {
 }
 
 void OsSimulation::requestFile(int dIndex, std::string &fileName) {
-    if (dIndex >= disk.size()) {
+    if (dIndex >= disks.size()) {
         std::cout <<
-            "Operating system does not have "
+            "system does not have "
             "that many Disk" << std::endl;
         return;
     }
 
-    runningProcess().requestDisk(disk.at(dIndex), fileName);
+    runningProcess().requestDisk(disks.at(dIndex), fileName);
+
+    runNextInQueue();
 }
 
 void OsSimulation::diskFinish(int diskNum) {
     //get the id of the process using the disk
-    int pidInDisk = disk.at(diskNum).getProcess();
+    int pidInDisk = disks.at(diskNum).getProcess();
 
     processes.at(pidInDisk).finishUsingDisk();
-
+    disks.at(diskNum).finishJob();
     //add it to the readyQueue
     readyQueue.push_back(pidInDisk);
+}
+
+void OsSimulation::snapShotIO() {
+    //iterate through all the disks
+    std::cout << "inside snap shot" << std::endl;
+    for (int i = 0; i < disks.size(); i++) {
+        Disk &currentDisk = disks.at(i);
+
+        if (currentDisk.isIdle()){
+            std::cout << "Disk " << i << " idle" << std::endl;
+            continue;
+        }
+        
+        int pidInDisk = currentDisk.getProcess();
+
+        std::cout << "Disk " << i << "using: "
+        << "pId: " << pidInDisk
+        << " file: " << processes.at(pidInDisk).getFile() << std::endl;
+
+        std::cout << "  I/O Queue: " << std::endl;
+
+        for (auto queueId : currentDisk.getQueue()) {
+            Process &proInQueue = processes.at(queueId);
+            std::cout << "  pid: "
+            << proInQueue.getId() << " file:"
+            << proInQueue.getFile() << std::endl;
+        }
+    }
+}
+
+void OsSimulation::runNextInQueue() {
+    //run the nextInline
+    int nextInline = readyQueue.front();
+    readyQueue.pop_front();
+
+    cpu.run(processes.at(nextInline));
 }
 
