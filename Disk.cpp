@@ -26,4 +26,12 @@ int Disk::getProcess() {
     return usingProcess;
 }
 
+std::deque<int> &Disk::getQueue() {
+    return waiting;
+}
+
+bool Disk::isIdle() {
+    return usingProcess == 0;
+}
+
 

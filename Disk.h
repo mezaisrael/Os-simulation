@@ -21,6 +21,11 @@ public:
 
     //return id of the current process using the disk
     int getProcess();
+
+    //returns a reference to the pIds in the queue
+    std::deque<int>& getQueue();
+
+    bool isIdle();
 private:
 
     //pid of the current process using the disk
