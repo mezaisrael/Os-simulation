@@ -15,6 +15,8 @@ public:
 
     //returns id of the running proceess
     int getRunning() const;
+
+    bool isIdle();
 private:
     int processingId;
 };

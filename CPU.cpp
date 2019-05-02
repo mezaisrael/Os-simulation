@@ -12,3 +12,8 @@ void CPU::run(Process &newRunning) {
 int CPU::getRunning() const {
     return processingId;
 }
+
+bool CPU::isIdle() {
+    return getRunning() == 1;
+}
+
