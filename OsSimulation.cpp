@@ -3,7 +3,6 @@
 //
 
 #include <sstream>
-#include <zconf.h>
 #include "OsSimulation.h"
 #include "HelperFunctions.h"
 
@@ -34,9 +33,10 @@ OsSimulation::OsSimulation() : pIdAvailable(rootPid) {
     //create the root process
     Process rootProcess(pIdAvailable);
 
-    //add the root process to the list of process control blocks
+//    add the root process to the list of process control blocks
     processes.insert({rootProcess.getId(), rootProcess});
-    //cpu starts running process with pid of 1
+    //cpu starts running process with pid of 1 which
+    //means it is idle
     cpu.run(rootProcess);
 
     disks.resize(diskCount);
@@ -90,6 +90,10 @@ void OsSimulation::promptForCommand() {
             exitRunning();
         } else {
             std::cout << "invalid input" << std::endl;
+        }
+
+        if (cpu.isIdle()) {
+           runNextInQueue();
         }
     }
 
@@ -280,6 +284,10 @@ void OsSimulation::snapShotIO() {
 }
 
 void OsSimulation::runNextInQueue() {
+    if (readyQueue.empty()) {
+        return;
+    }
+
     //run the nextInline
     int nextInline = readyQueue.front();
     readyQueue.pop_front();
