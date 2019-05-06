@@ -9,12 +9,12 @@
 //constructor
 OsSimulation::OsSimulation() : pIdAvailable(rootPid) {
     int diskCount;
+    int memory;
+    int pages;
     while (true) {
-        int memory;
-        int pages;
         std::cout << "Memory:(bytes)";
         std::cin >> memory;
-        std::cout << "\npages:" << std::endl;
+        std::cout << "\npage size:" << std::endl;
         std::cin >> pages;
         std::cout << "\nDisk:" << std::endl;
         std::cin >> diskCount;
@@ -33,13 +33,15 @@ OsSimulation::OsSimulation() : pIdAvailable(rootPid) {
     //create the root process
     Process rootProcess(pIdAvailable);
 
-//    add the root process to the list of process control blocks
+//    add the root process to the list of process control
     processes.insert({rootProcess.getId(), rootProcess});
     //cpu starts running process with pid of 1 which
     //means it is idle
     cpu.run(rootProcess);
 
     disks.resize(diskCount);
+
+    _memoryManager.initiate(memory, pages);
 }
 
 void OsSimulation::promptForCommand() {
@@ -79,15 +81,26 @@ void OsSimulation::promptForCommand() {
                 int diskNum = stoi(commands.at(1));
                 diskFinish(diskNum);
             } catch (...) {
-                std::cout << "Input is not a number" << std::endl;
+                std::cout << "not a valid disk number" << std::endl;
             }
         } else if(userInput == "S i") {
             snapShotIO();
-        } else if (userInput == "info") {
+        } else if (commands.at(0) == "m") {
+            try {
+                int address = stoi(commands.at(1));
+                requestMemory(address);
+            } catch (...) {
+                std::cout << "not a valid memory address" << std::endl;
+            }
+
+        }
+        else if (userInput == "info") {
             printProcessInfo();
         } else if (userInput == "exit") {
             //todo. test this function
             exitRunning();
+        } else if(userInput == "S m") {
+            _memoryManager.snapshot();
         } else {
             std::cout << "invalid input" << std::endl;
         }
@@ -293,5 +306,14 @@ void OsSimulation::runNextInQueue() {
     readyQueue.pop_front();
 
     cpu.run(processes.at(nextInline));
+}
+
+void OsSimulation::requestMemory(int address) {
+    if (cpu.isIdle()) {
+        std::cout << "cpu is idle" << std::endl;
+        return;
+    }
+
+    _memoryManager.request(address, cpu.getRunning());
 }
 

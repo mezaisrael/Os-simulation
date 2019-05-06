@@ -13,10 +13,10 @@
 #include "Disk.h"
 #include "CPU.h"
 #include "HelperFunctions.h"
+#include "MemoryManager.h"
 
 
-//    TODO: process 1 never uses cpu or any queue
-//    cpu starts with 2. its ok to make cpu idleR
+
 class OsSimulation {
 public:
     OsSimulation();
@@ -38,6 +38,9 @@ private:
     std::vector<Disk> disks;
 
     CPU cpu;
+
+    //memory
+    MemoryManager _memoryManager;
 
     //processes in waiting
     std::deque<int> waitingQueue;
@@ -93,6 +96,10 @@ private:
     void snapShotIO();
 
     void runNextInQueue();
+
+    void requestMemory(int address);
+
+    void snapshotMemory();
 };
 
 
