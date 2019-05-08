@@ -4,8 +4,8 @@
 
 #include "Process.h"
 
-//constructor for the root process it start in the running state since it is the root
-Process::Process(int& pId) : _pId(pId), _parentPid(0), _state(running), currentDisk(-1) {
+//constructor for the root process it start in the waiting state but technically will never be able to change state
+Process::Process(int& pId) : _pId(pId), _parentPid(0), _state(waiting), currentDisk(-1) {
     //increment the available pid
     pId++;
 }
@@ -63,6 +63,10 @@ void Process::finishUsingDisk() {
     currentDisk = -1;
     _fileName = "";
     setState(ready);
+}
+
+int Process::getDisk() {
+    return currentDisk;
 }
 
 

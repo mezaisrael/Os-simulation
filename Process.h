@@ -25,7 +25,7 @@ public:
 
     int getParent();
 
-    //returns a reference to the Process children
+    //returns pid of Process children
     std::unordered_set<int> & getChildren();
 
     void addChild(int childPid);
@@ -46,6 +46,7 @@ public:
     //process finished using the disk
     void finishUsingDisk();
 
+    int getDisk();
     //get the name of the file it is using
     // return empty string if it is not using a file
     std::string getFile();
