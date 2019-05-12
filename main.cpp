@@ -1,4 +1,5 @@
-//Israel Meza csci 340 02
+//Israel Meza
+//csci 340 section 02
 #include <iostream>
 #include <vector>
 #include "OsSimulation.h"
@@ -7,8 +8,6 @@
 using namespace std;
 
 int main() {
-    std::cout << "Hello, World!" << std::endl;
-
     OsSimulation osSim;
 
     osSim.promptForCommand();

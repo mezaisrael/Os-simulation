@@ -13,10 +13,10 @@ public:
     //pass it a new Process to process
     void run(Process &process);
 
-    //returns id of the running proceess
+    //returns id of the running process
     int getRunning() const;
 
-    bool isIdle();
+    bool isIdle() const;
 private:
     int processingId;
 };
