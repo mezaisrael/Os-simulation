@@ -22,6 +22,10 @@ public:
     void setFrame(int pid, int pageNum, int time);
 
     bool isEmpty();
+
+    //removes everything from memory
+    void empty();
+
 private:
     int _lastUsed;
     int _pid;

@@ -32,4 +32,10 @@ bool Frame::isEmpty() {
     return _pid == 0;
 }
 
+void Frame::empty() {
+    _lastUsed = -1;
+    _pid = 0;
+    _pageNumber =0;
+}
+
 
