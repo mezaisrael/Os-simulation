@@ -6,14 +6,16 @@
 
 void CPU::run(Process &newRunning) {
     processingId = newRunning.getId();
-    newRunning.setState(running);
+    if (newRunning.getId() != 1) {
+        newRunning.setState(running);
+    }
 }
 
-int CPU::getRunning() const {
+int CPU::getRunning() const{
     return processingId;
 }
 
-bool CPU::isIdle() {
-    return getRunning() == 1;
+bool CPU::isIdle() const {
+    return (getRunning() == 1);
 }
 
