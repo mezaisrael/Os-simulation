@@ -26,6 +26,9 @@ public:
     std::deque<int>& getQueue();
 
     bool isIdle();
+
+    //remove pid from waiting queue
+    void remove(int pid);
 private:
 
     //pid of the current process using the disk

@@ -18,8 +18,14 @@ bool Disk::use(int pId) {
 }
 
 void Disk::finishJob() {
-    usingProcess = waiting.front();
-    waiting.pop_front();
+    int next;
+    if (waiting.empty()) {
+        next = 0;
+    } else {
+        next = waiting.front();
+        waiting.pop_front();
+    }
+    usingProcess = next;
 }
 
 int Disk::getProcess() {
@@ -32,6 +38,15 @@ std::deque<int> &Disk::getQueue() {
 
 bool Disk::isIdle() {
     return usingProcess == 0;
+}
+
+void Disk::remove(int pid) {
+    for (auto it = waiting.begin(); it < waiting.end(); it++) {
+        if (*it == pid) {
+            //remove from queue
+            waiting.erase(it);
+        }
+    }
 }
 
 
