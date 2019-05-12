@@ -8,9 +8,9 @@
 
 //constructor
 OsSimulation::OsSimulation() : pIdAvailable(rootPid) {
-    int diskCount;
-    int memory;
-    int pages;
+    unsigned diskCount;
+    unsigned int memory;
+    unsigned pages;
     while (true) {
         std::cout << "Memory:(bytes)";
         std::cin >> memory;
@@ -33,8 +33,8 @@ OsSimulation::OsSimulation() : pIdAvailable(rootPid) {
     //create the root process
     Process rootProcess(pIdAvailable);
 
-//    add the root process to the list of process control
-    processes.insert({rootProcess.getId(), rootProcess});
+    //add the root process to the list of process control
+    processControl.insert({rootProcess.getId(), rootProcess});
     //cpu starts running process with pid of 1 which
     //means it is idle
     cpu.run(rootProcess);
@@ -81,7 +81,7 @@ void OsSimulation::promptForCommand() {
                 int diskNum = stoi(commands.at(1));
                 diskFinish(diskNum);
             } catch (...) {
-                std::cout << "not a valid disk number" << std::endl;
+                std::cout << "error" << std::endl;
             }
         } else if(userInput == "S i") {
             snapShotIO();
@@ -101,7 +101,10 @@ void OsSimulation::promptForCommand() {
             exitRunning();
         } else if(userInput == "S m") {
             _memoryManager.snapshot();
-        } else {
+        } else if(userInput == "end") {
+            std::cout << "Good bye" << std::endl;
+        }
+        else {
             std::cout << "invalid input" << std::endl;
         }
 
@@ -123,19 +126,20 @@ void OsSimulation::rotateProcess() {
 
 //starts a new process which is essentially a fork of the root
 void OsSimulation::startNewProcess() {
-    Process & root = processes.at(rootPid);
+    Process & root = processControl.at(rootPid);
 
     fork(root);
 }
 
 void OsSimulation::snapShotReadyQueue() const {
-    std::cout << "cpu: pid " << cpu.getRunning() << std::endl;
-    std::cout << "r-q: " << std::endl;
 
+    std::string running = cpu.isIdle() ? "idle" : std::to_string(cpu.getRunning());
+
+    std::cout << "cpu pid|" << running << std::endl;
+    printf("r_Q pid|");
     for (auto id : readyQueue) {
-        std::cout << id << std::endl;
+        printf("<-%i", id);
     }
-
     std::cout << std::endl;
 }
 
@@ -146,7 +150,7 @@ void OsSimulation::fork(Process &forkingProcess) {
     forkingProcess.addChild(childProc.getId());
 
     //insert it to the process container
-    processes.insert({childProc.getId(), childProc});
+    processControl.insert({childProc.getId(), childProc});
 
     //insert id to the ready queue
     readyQueue.push_back(childProc.getId());
@@ -161,8 +165,21 @@ void OsSimulation::waitForChildren() {
         return;
     }
 
+    //check if any of its children are zombies
+    //if so then consume it and no deed to wait
+    for(auto childId : runningProcess().getChildren()) {
+        Process& childProcess = processControl.at(childId);
+        if (childProcess.getState() == terminated) {
+            //remove the zombie process
+            runningProcess().removeChild(childId);
+            //and also remove it from the process control
+            processControl.erase(childId);
+            return;
+        }
+    }
+
     //add the running process to the waiting queue
-    waitingQueue.push_back(runningProcess().getId());
+    runningProcess().setState(waiting);
 
     runNextInQueue();
 }
@@ -175,7 +192,7 @@ void OsSimulation::printProcessInfo() {
         std::cin.ignore();
     }
 
-    Process & process = processes.at(pId);
+    Process & process = processControl.at(pId);
     std::cout << "pid     : " << process.getId() << std::endl;
     std::cout << "parent  : " << process.getParent() << std::endl;
     std::cout << "file    : " << process.getFile() << std::endl;
@@ -187,35 +204,68 @@ void OsSimulation::printProcessInfo() {
 }
 
 void OsSimulation::exitRunning() {
-    //if parent is waiting make it ready
+    if (cpu.isIdle()) {
+        std::cout << "No process to exit" << std::endl;
+        return;
+    }
+
+    int runningId = cpu.getRunning();
+
+    //free from memory
+    if(_memoryManager.isInMem(runningId)) {
+        _memoryManager.remove(runningId);
+    }
+
     int parentId = runningProcess().getParent();
-    if(parentId != 0 && processes.at(parentId).getState() == waiting) {
-        processes.at(parentId).setState(ready);
-        readyQueue.push_back(runningProcess().getId());
-        endProcess(runningProcess());
+    Process &parentPro = processControl.at(parentId);
+    //if parent is waiting make it ready only if it is it is not the root
+    if(parentPro.getState() == waiting) {
+        //if the parent is not the root, put it back in the ready state and in the ready queue
+        if (parentPro.getId() != rootPid) {
+            parentPro.setState(ready);
+            readyQueue.push_back(parentPro.getId());
+        }
+
+        parentPro.removeChild(runningId);
+        terminate(runningProcess());
     } else {
-        //if parent hasn't called wait, make it and its decedents zombies
-        turnToZombie(runningProcess());
+        //if parent hasn't called wait, make the running process a zombie(still in process control)
+        runningProcess().setState(terminated);
+        //terminate its children
+        for (auto childId : runningProcess().getChildren()) {
+            terminate(processControl.at(childId));
+        }
     }
 
     runNextInQueue();
 }
 
-void OsSimulation::endProcess(Process & process) {
-    //base case
-    if (!process.isParent()) {
-        //if its in ready que remove it
-        //todo: if its in disk, remove from disk once implemented
-        if (process.getState() == ready) {
-        } else if(process.getState() == waiting) {
-
-        }
-        processes.erase(process.getId());
+void OsSimulation::terminate(Process &process) {
+    //free from memory
+    if(_memoryManager.isInMem(process.getId())) {
+        _memoryManager.remove(process.getId());
     }
 
+    //base case: If process is childless
+    if (!process.isParent()) {
+        //if its in readyQueue remove it
+        if (process.getState() == ready) {
+            removeFromReady(process.getId());
+        } else if(process.getState() == readyIO) {
+            disks.at(process.getDisk()).remove(process.getId());
+        } else if (process.getState() == usingDisk) {
+            disks.at(process.getDisk()).finishJob();
+        }
+
+        //remove from process control
+        processControl.erase(process.getId());
+        return;
+    }
+
+    //recursively terminate its children
     std::unordered_set<int> childrenIds = process.getChildren();
     for(auto childId : childrenIds) {
-        endProcess(processes.at(childId));
+        terminate(processControl.at(childId));
     }
 }
 
@@ -242,7 +292,7 @@ void OsSimulation::turnToZombie(Process &infectedProcess) {
 }
 
 Process &OsSimulation::runningProcess() {
-    return processes.at(cpu.getRunning());
+    return processControl.at(cpu.getRunning());
 }
 
 void OsSimulation::requestFile(int dIndex, std::string &fileName) {
@@ -259,18 +309,29 @@ void OsSimulation::requestFile(int dIndex, std::string &fileName) {
 }
 
 void OsSimulation::diskFinish(int diskNum) {
+    //the disk who has completed its job
+    Disk& myDisk = disks.at(diskNum);
+    if (myDisk.isIdle()) {
+        std::cout << "can finish job of empty disk" << std::endl;
+        return;
+    }
     //get the id of the process using the disk
-    int pidInDisk = disks.at(diskNum).getProcess();
+    int pidInDisk = myDisk.getProcess();
 
-    processes.at(pidInDisk).finishUsingDisk();
-    disks.at(diskNum).finishJob();
+    processControl.at(pidInDisk).finishUsingDisk();
     //add it to the readyQueue
     readyQueue.push_back(pidInDisk);
+
+    //disk finished its job
+    myDisk.finishJob();
+    if (!myDisk.isIdle()) {
+        int newInDisk = myDisk.getProcess();
+        processControl.at(newInDisk).setState(usingDisk);
+    }
 }
 
 void OsSimulation::snapShotIO() {
     //iterate through all the disks
-    std::cout << "inside snap shot" << std::endl;
     for (int i = 0; i < disks.size(); i++) {
         Disk &currentDisk = disks.at(i);
 
@@ -281,23 +342,24 @@ void OsSimulation::snapShotIO() {
         
         int pidInDisk = currentDisk.getProcess();
 
-        std::cout << "Disk " << i << "using: "
-        << "pId: " << pidInDisk
-        << " file: " << processes.at(pidInDisk).getFile() << std::endl;
-
-        std::cout << "  I/O Queue: " << std::endl;
-
+        printf("Disk %*d| pid | file \n", 3, i);
+        printf("~~~~~~~~~~~~~~~~~~~~~~~~~~~\n");
+        printf(" in disk|%*d |",4, pidInDisk);
+        std::string fileName = processControl.at(pidInDisk).getFile();
+        std::cout << fileName << std::endl;
         for (auto queueId : currentDisk.getQueue()) {
-            Process &proInQueue = processes.at(queueId);
-            std::cout << "  pid: "
-            << proInQueue.getId() << " file:"
-            << proInQueue.getFile() << std::endl;
+            Process &proInQueue = processControl.at(queueId);
+            printf ("  queue |%*d | ", 4, proInQueue.getId());
+            std::cout << proInQueue.getFile() << std::endl;
         }
+        std::cout << std::endl;
     }
 }
 
 void OsSimulation::runNextInQueue() {
     if (readyQueue.empty()) {
+        //if cpu holds root than it is idle
+        cpu.run(processControl.at(rootPid));
         return;
     }
 
@@ -305,7 +367,7 @@ void OsSimulation::runNextInQueue() {
     int nextInline = readyQueue.front();
     readyQueue.pop_front();
 
-    cpu.run(processes.at(nextInline));
+    cpu.run(processControl.at(nextInline));
 }
 
 void OsSimulation::requestMemory(int address) {
@@ -315,5 +377,13 @@ void OsSimulation::requestMemory(int address) {
     }
 
     _memoryManager.request(address, cpu.getRunning());
+}
+
+void OsSimulation::removeFromReady(int id) {
+    for(auto it = readyQueue.begin(); it < readyQueue.end(); it++) {
+        if (*it == id) {
+            readyQueue.erase(it);
+        }
+    }
 }
 

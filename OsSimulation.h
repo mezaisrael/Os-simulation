@@ -29,10 +29,9 @@ private:
     //current _pId available
     int pIdAvailable;
 
-    //list of process control blocks. maps Pid to Process
-    //maps pid to actual process. this is helpful to have a
-    //central place to look for a process regardless of its state
-    std::unordered_map<int,Process> processes;
+    //list of process control blocks. maps Pid to Process it
+    //is helpful to have a central place to look for a process regardless of its state
+    std::unordered_map<int,Process> processControl;
 
     //each disk has process in queue
     std::vector<Disk> disks;
@@ -41,9 +40,6 @@ private:
 
     //memory
     MemoryManager _memoryManager;
-
-    //processes in waiting
-    std::deque<int> waitingQueue;
 
     //processes in readyQueue queue
     std::deque<int> readyQueue;
@@ -80,7 +76,7 @@ private:
     void exitRunning();
 
     //helper method for exitRunning()
-    void endProcess(Process& processPtr);
+    void terminate(Process &processPtr);
 
     /*
     recursive helper method called by exit running infectedProcess
@@ -99,7 +95,7 @@ private:
 
     void requestMemory(int address);
 
-    void snapshotMemory();
+    void removeFromReady(int id);
 };
 
 
