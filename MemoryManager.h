@@ -7,6 +7,7 @@
 
 
 #include <vector>
+#include <unordered_map>
 #include "Frame.h"
 
 class MemoryManager {
@@ -20,11 +21,20 @@ public:
     void snapshot();
 
     Frame & getLru();
+
+    //return if the pid is in memory
+    bool isInMem(int pid);
+
+    //remove pid from memory
+    void remove(int pid);
 private:
     int _time;
-    int _memory;
-    int _pageSize;
+    unsigned int _memory;
+    unsigned int _pageSize;
     std::vector<Frame> _frames;
+
+    //map pid to frame position
+    std::unordered_map<int,int> _pidsInMem;
 
     //hold the position of the of least used frame.
     // It can be calculated when checking for
